@@ -4,7 +4,7 @@ const { HttpError } = require("../helpers");
 const { SECRET_KEY } = process.env;
 const { User } = require("../models/user");
 
-const authenticate = async (req, res, next) => {
+const authenticate = async (req, _, next) => {
   const { authorization = "" } = req.headers;
   const [bearer, token] = authorization.split(" ");
 
