@@ -31,7 +31,7 @@ const register = async (req, res) => {
     avatarURL,
   });
 
-  const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "23h" });
+  const token = jwt.sign(newUser._id, SECRET_KEY, { expiresIn: "23h" });
 
   res.status(201).json({
     token,
