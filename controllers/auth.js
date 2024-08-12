@@ -6,14 +6,10 @@ const fs = require("fs/promises");
 const Jimp = require("jimp");
 
 const { User } = require("../models/user");
-
 const { HttpError, ctrlWrapper } = require("../helpers");
-
 const { SECRET_KEY } = process.env;
-
 const avatarDir = path.join(__dirname, "../", "public", "avatars");
 
-// Registration
 const register = async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
@@ -47,7 +43,6 @@ const register = async (req, res) => {
   });
 };
 
-// Login
 const login = async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
@@ -76,7 +71,6 @@ const login = async (req, res) => {
   });
 };
 
-// Current
 const getCurrent = async (req, res) => {
   const { email, name, avatarURL, shopping_list } = req.user;
   res.json({
@@ -87,7 +81,6 @@ const getCurrent = async (req, res) => {
   });
 };
 
-// Logout
 const logout = async (req, res) => {
   const { _id } = req.user;
   await User.findByIdAndUpdate(_id, { token: "" });
@@ -95,7 +88,6 @@ const logout = async (req, res) => {
   res.status(204).json("");
 };
 
-// Update avatar
 const updateAvatar = async (req, res) => {
   const { _id } = req.user;
   const { path: tempUpload, originalname } = req.file;
