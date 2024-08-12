@@ -78,7 +78,7 @@ const login = async (req, res) => {
 
 // Current
 const getCurrent = async (req, res) => {
-  const { email, name, shopping_list } = req.user;
+  const { email, name, avatarURL, shopping_list } = req.user;
   res.json({
     email,
     name,
