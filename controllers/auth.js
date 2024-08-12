@@ -42,6 +42,7 @@ const register = async (req, res) => {
     user: {
       name: newUser.name,
       email: newUser.email,
+      avatarURL: newUser.avatarURL,
     },
   });
 };
@@ -69,7 +70,10 @@ const login = async (req, res) => {
 
   await User.findByIdAndUpdate(user._id, { token });
 
-  res.json({ token, user: { email, name: user.name } });
+  res.json({
+    token,
+    user: { email, name: user.name, avatarURL: user.avatarURL },
+  });
 };
 
 // Current
@@ -78,6 +82,7 @@ const getCurrent = async (req, res) => {
   res.json({
     email,
     name,
+    avatarURL,
     shopping_list,
   });
 };
