@@ -101,10 +101,10 @@ const updateAvatar = async (req, res) => {
 
   const avatarURL = path.join("avatars", uniqueFilename);
 
-  await User.findByIdAndUpdate(_id, { avatarURL }, { new: true });
+  const user = await User.findByIdAndUpdate(_id, { avatarURL }, { new: true });
 
   res.json({
-    avatarURL,
+    user,
   });
 };
 module.exports = {
