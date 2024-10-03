@@ -4,11 +4,25 @@ const gravatar = require("gravatar");
 const path = require("path");
 const fs = require("fs/promises");
 const Jimp = require("jimp");
+const { Storage } = require("@google-cloud/storage");
 
 const { User } = require("../models/user");
 const { HttpError, ctrlWrapper } = require("../helpers");
 const { SECRET_KEY } = process.env;
-const avatarDir = path.join(__dirname, "../", "public", "avatars");
+
+const keyFilenamePath = path.resolve(
+  __dirname,
+  "..",
+  "helpers",
+  "bookshelf-store-437509-95181a1a8495.json"
+);
+
+const tempAvatar = path.join(__dirname, "../", "temp", "profileAvatar.jpg");
+
+const storage = new Storage({
+  projectId: "bookshelf-store-437509",
+  keyFilename: keyFilenamePath,
+});
 
 const register = async (req, res) => {
   const { email, password } = req.body;
@@ -19,12 +33,12 @@ const register = async (req, res) => {
   }
 
   const hashPassword = await bcrypt.hash(password, 10);
-  const avatarURL = gravatar.url(email);
+  const avatarURLTemp = tempAvatar;
 
   const newUser = await User.create({
     ...req.body,
     password: hashPassword,
-    avatarURL,
+    avatarURL: avatarURLTemp,
   });
 
   const payload = {
@@ -88,25 +102,49 @@ const logout = async (req, res) => {
   res.status(204).json("");
 };
 
-const updateAvatar = async (req, res) => {
-  const { _id } = req.user;
-  const { path: tempUpload, originalname } = req.file;
-  const uniqueFilename = `${_id}_${originalname}`;
-  const resultUpload = path.join(avatarDir, uniqueFilename);
-  const jimpFile = await Jimp.read(tempUpload);
-  jimpFile.resize(250, 250);
-  await jimpFile.writeAsync(resultUpload);
+const updateAvatar = async (req, res, next) => {
+  try {
+    const bucketName = "bookshelf-1323-store-bucket";
+    const { _id } = req.user;
+    const { originalname, path } = req.file;
+    const uniqueFilename = `${_id}_${originalname}`;
 
-  await fs.rename(tempUpload, resultUpload);
+    const fileName = `avatars/${uniqueFilename}`;
 
-  const avatarURL = path.join("avatars", uniqueFilename);
+    const [fileUpload] = await storage.bucket(bucketName).upload(path, {
+      destination: fileName,
+      predefinedAcl: "publicRead",
+    });
 
-  const user = await User.findByIdAndUpdate(_id, { avatarURL }, { new: true });
+    if (!fileUpload) {
+      throw HttpError(
+        404,
+        "Can't upload user avatar, check your authorisation"
+      );
+    }
 
-  res.json({
-    user,
-  });
+    const publicUrl = `https://storage.googleapis.com/${bucketName}/${fileName}`;
+
+    const user = await User.findByIdAndUpdate(
+      _id,
+      { avatarURL: publicUrl },
+      { new: true }
+    );
+
+    if (!user) {
+      throw HttpError(404, "Can't update user avatar, user not found");
+    }
+
+    const currentUser = await User.findById(_id);
+
+    res.json({
+      user: currentUser,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
+
 module.exports = {
   register: ctrlWrapper(register),
   login: ctrlWrapper(login),
