@@ -1,27 +1,40 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const gravatar = require("gravatar");
 const path = require("path");
-const fs = require("fs/promises");
-const Jimp = require("jimp");
 const { Storage } = require("@google-cloud/storage");
-
 const { User } = require("../models/user");
 const { HttpError, ctrlWrapper } = require("../helpers");
 const { SECRET_KEY } = process.env;
 
-const keyFilenamePath = path.resolve(
-  __dirname,
-  "..",
-  "helpers",
-  "bookshelf-store-437509-95181a1a8495.json"
-);
-
 const tempAvatar = path.join(__dirname, "../", "temp", "profileAvatar.jpg");
+
+const {
+  PRIVATE_KEY_ID,
+  PRIVATE_KEY,
+  PROJECT_ID,
+  CLIENT_EMAIL,
+  CLIENT_ID,
+  CLIENT_CERT_URL,
+} = process.env;
+
+const privateKey = PRIVATE_KEY.split(String.raw`\n`).join("\n");
 
 const storage = new Storage({
   projectId: "bookshelf-store-437509",
-  keyFilename: keyFilenamePath,
+
+  credentials: {
+    type: "service_account",
+    project_id: `${PROJECT_ID}`,
+    private_key_id: `${PRIVATE_KEY_ID}`,
+    private_key: `${privateKey}`,
+    client_email: `${CLIENT_EMAIL}`,
+    client_id: `${CLIENT_ID}`,
+    auth_uri: "https://accounts.google.com/o/oauth2/auth",
+    token_uri: "https://oauth2.googleapis.com/token",
+    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+    client_x509_cert_url: `${CLIENT_CERT_URL}`,
+    universe_domain: "googleapis.com",
+  },
 });
 
 const register = async (req, res) => {
